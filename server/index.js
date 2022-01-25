@@ -493,12 +493,12 @@ function autoqueue(req,user) {
       request(options, function (error, response) {
         console.log(response.body)
         if (response.body!==''){
-          sendMessage(req.sender, "Could not process your request, DJ must be playing music for autoqueue to work")
+          sendMessage(req.sender, "DJ must be playing music in order to receive requests. Please try again later")
           return;
         }
         users.findOneAndUpdate({username: user.username},{$push: { queued: req } }).then((updatedDoc)=>{
           console.log(req)
-          sendMessage(req.sender,"Request for " + req.title + " by " + req.artist +" has been automatically sent to the queue. Use this number to send requests in the future")
+          sendMessage(req.sender,"Request for " + req.title + " by " + req.artist +" has been added to the queue. Use this phone number to send more requests")
         })
 
       });
@@ -573,7 +573,7 @@ app.post("/sms", async (req,res) => {
           }
         })
       }else{
-        sendMessage(sender,"Welcome to Text-a-Tune. To request a song, you must first join a session. You can do that by responding with:\n'Join Session ...' and replace the '...' with the session code. To leave this session, text 'LEAVE' in all caps")
+        sendMessage(sender,"Welcome to Text-a-Tune. To request a song, you must first join an active session. You can do that by responding with:\n'Join Session [session code]")
       }
     }else{
       // SENDER NUM IS ALREADY LINKED TO A CODE
@@ -606,7 +606,7 @@ app.post("/sms", async (req,res) => {
         
   
         }else{
-          sendMessage(sender,"Welcome to Text-a-Tune. To request a song, you must first join a session. You can do that by responding with:\n'Join Session ...' and replace the '...' with the session code. To leave this session, text 'LEAVE' in all caps")
+          sendMessage(sender,"Welcome to Text-a-Tune. To request a song, you must first join an active session. You can do that by responding with:\n'Join Session [session code]")
         }
 
       }else if(req.body.Body == "LEAVE"){
@@ -622,13 +622,13 @@ app.post("/sms", async (req,res) => {
             texters.findOneAndUpdate({phonenumber: sender}, {$set: { expireTime: newTTL } })
 
             if(user.organization==""){
-              sendMessage(sender,"You have now been added to " + user.username + "'s session. Your phone number will be associated with this session for the next 12 hours. You can join another session at anytime by texting 'Join session' followed by the session code")
+              sendMessage(sender,"Welcome to Text-a-Tune. You’re all set! You have been succesfully added to " + user.username + "'s session. Use this phone number to text the name of the song you want to hear. Be sure to check the spelling and include the artist if there are multiple songs with the same name.")
             }else{
-              sendMessage(sender,"You have now been added to " + user.organization + "'s session. Your phone number will be associated with this session for the next 12 hours. You can join another session at anytime by texting 'Join session' followed by the session code")
+              sendMessage(sender,"Welcome to Text-a-Tune. You’re all set! You have been succesfully added to " + user.organization + "'s session. Use this phone number to text the name of the song you want to hear. Be sure to check the spelling and include the artist if there are multiple songs with the same name.")
             }
 
           }else{
-            sendMessage(sender,"Invalid Code")
+            sendMessage(sender,"You have entered an invalid code. Please check the code and resend")
           }
         })
 
@@ -702,11 +702,11 @@ app.post("/sms", async (req,res) => {
                       true).then(updatedDoc=>{
                     console.log(updatedDoc)
                   })
-                  sendMessage(sender, "Request for " + request.title + " by " + request.artist +" has been sent to the DJ. Use this number to send requests in the future")
+                  sendMessage(sender, "Request for " + request.title + " by " + request.artist +" has been sent to the DJ for approval. We will let you know once it has been added to the queue. Use this phone number to send more requests.")
                 }else{
                   users.findOneAndUpdate({ code: texter.code },{$push: { requests: request } }).then((updatedDoc)=>{
                     if(updatedDoc){
-                      sendMessage(sender, "Request for " + request.title + " by " + request.artist +" has been sent to the DJ. Use this number to send requests in the future")
+                      sendMessage(sender, "Request for " + request.title + " by " + request.artist +" has been sent to the DJ for approval. We will let you know once it has been added to the queue. Use this phone number to send more requests.")
 
                     }else{
                       sendMessage(sender, "No account associated with code: " + texter.code)
@@ -725,7 +725,7 @@ app.post("/sms", async (req,res) => {
             
         
           }).catch(e=>{
-            sendMessage(sender, "No such song found")
+            sendMessage(sender, "We could not find a song by that name. Please check your spelling and try again")
           })
         })
       }
@@ -766,7 +766,7 @@ app.post("/updaterequests",(req,res)=>{
         console.log(updatedDoc)
       })
 
-      sendMessage(req.body.request.sender, "Your request for " + req.body.request.title + " by " + req.body.request.artist + " has been approved by the DJ")
+      sendMessage(req.body.request.sender, "Your request for " + req.body.request.title + " by " + req.body.request.artist + " has been approved by the DJ and is now in the queue.")
 
     }
 
